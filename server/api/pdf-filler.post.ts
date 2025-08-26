@@ -1,5 +1,5 @@
 import { H3Event, readBody } from 'h3'
-import chromium from 'chrome-aws-lambda';
+import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -202,10 +202,8 @@ export default defineEventHandler(async (event: H3Event) => {
   // Launch Puppeteer (chrome-aws-lambda) and generate PDF
   const browser = await puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath,
-    headless: chromium.headless,
-    ignoreHTTPSErrors: true,
+    executablePath: await chromium.executablePath(),
+    headless: true,
   });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -213,6 +211,10 @@ export default defineEventHandler(async (event: H3Event) => {
   await browser.close();
 
   event.node.res.setHeader('Content-Type', 'application/pdf');
-  event.node.res.setHeader('Content-Disposition', 'attachment; filename="{{NAME}}-{LawFirmName}-SD.pdf"');
+  // Sanitize name for filename (remove special chars, trim, fallback to 'StatutoryDeclaration')
+  let safeName = (data.NAME || '').replace(/[^a-zA-Z0-9\-_ ]/g, '').replace(/\s+/g, '_').trim();
+  if (!safeName) safeName = 'StatutoryDeclaration';
+  const filename = `${safeName}_SD.pdf`;
+  event.node.res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   return Buffer.from(pdfBuffer);
 });

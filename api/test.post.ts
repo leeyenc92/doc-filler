@@ -1,4 +1,4 @@
-const { H3Event, readBody } = require('h3')
+const { readBody } = require('h3')
 
 export default defineEventHandler(async (event: any) => {
   try {

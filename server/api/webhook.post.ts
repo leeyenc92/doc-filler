@@ -1,4 +1,4 @@
-const { H3Event, readBody } = require('h3')
+const { readBody, createError } = require('h3')
 
 // Conditional imports for hybrid approach
 let chromium: any = null;

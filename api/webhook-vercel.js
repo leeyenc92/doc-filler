@@ -247,7 +247,7 @@ export default async function handler(req, res) {
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
         
         try {
-          const pdfResponse = await fetch('https://api.html2pdf.app/v1/generate', {
+          const pdfResponse = await fetch('https://api.html2pdf.app/v1/generate?html=https://doc-filler.vercel.app', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

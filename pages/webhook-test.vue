@@ -29,7 +29,7 @@ async function testWebhook() {
   error.value = ''
   
   try {
-    const response = await fetch('/api/webhook', {
+    const response = await fetch('/api/webhook-vercel', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -45,22 +45,9 @@ async function testWebhook() {
     // Check response type and handle accordingly
     const contentType = response.headers.get('content-type')
     const environment = response.headers.get('x-environment')
-    const pdfAvailable = response.headers.get('x-pdf-available')
+    const moduleSystem = response.headers.get('x-module-system')
     
-    if (contentType?.includes('application/pdf')) {
-      // PDF response - download file
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${testData.value.name.replace(/\s+/g, '_')}_SD_Webhook.pdf`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      
-      result.value = `Webhook test successful! PDF downloaded. (Environment: ${environment})`
-    } else if (contentType?.includes('text/html')) {
+    if (contentType?.includes('text/html')) {
       // HTML response - show in new window
       const htmlContent = await response.text()
       const newWindow = window.open('', '_blank')
@@ -69,7 +56,7 @@ async function testWebhook() {
         newWindow.document.close()
       }
       
-      result.value = `Webhook test successful! HTML opened in new window. (Environment: ${environment}, PDF: ${pdfAvailable === 'true' ? 'Available' : 'Not Available'})`
+      result.value = `Webhook test successful! HTML opened in new window. (Environment: ${environment}, Module System: ${moduleSystem})`
     } else {
       // Unknown response type
       const text = await response.text()
@@ -199,10 +186,14 @@ function resetForm() {
       
       <div class="info-section">
         <h2>Webhook Information</h2>
+        <div class="alert success">
+          <VIcon name="check" />
+          <span><strong>Updated!</strong> Now using the new <code>/api/webhook-vercel</code> endpoint that's 100% compatible with Vercel deployment.</span>
+        </div>
         <div class="info-grid">
           <div class="info-item">
             <strong>Endpoint:</strong>
-            <code>POST /api/webhook</code>
+            <code>POST /api/webhook-vercel</code>
           </div>
           <div class="info-item">
             <strong>Content-Type:</strong>
@@ -210,15 +201,15 @@ function resetForm() {
           </div>
           <div class="info-item">
             <strong>Response:</strong>
-            <code>Environment-dependent</code>
+            <code>HTML Document</code>
           </div>
           <div class="info-item">
             <strong>Environment:</strong>
-            <code>{{ $config.public.vercel ? 'Vercel' : 'Local/Development' }}</code>
+            <code>Vercel Compatible</code>
           </div>
           <div class="info-item">
-            <strong>PDF Available:</strong>
-            <code>{{ $config.public.vercel ? 'No (Vercel)' : 'Yes (Local)' }}</code>
+            <strong>Module System:</strong>
+            <code>Pure JavaScript</code>
           </div>
           <div class="info-item">
             <strong>Documentation:</strong>
@@ -230,10 +221,10 @@ function resetForm() {
       <div class="curl-example">
         <h2>cURL Example</h2>
         <p>You can also test the webhook using curl:</p>
-        <pre><code>curl -X POST {{ $config.public.baseURL || 'http://localhost:3000' }}/api/webhook \
+        <pre><code>curl -X POST {{ $config.public.baseURL || 'http://localhost:3000' }}/api/webhook-vercel \
   -H "Content-Type: application/json" \
   -d '{{ JSON.stringify(testData, null, 2) }}' \
-  --output test_document.pdf</code></pre>
+  --output test_document.html</code></pre>
       </div>
     </div>
   </div>
@@ -308,6 +299,21 @@ function resetForm() {
   background: var(--danger-light);
   color: var(--danger);
   border: 1px solid var(--danger);
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.alert.success {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid var(--success);
 }
 
 .info-section {

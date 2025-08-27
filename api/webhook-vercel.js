@@ -74,155 +74,166 @@ export default async function handler(req, res) {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Statutory Declaration - ${data.NAME}</title>
+  <title>Statutory Declaration</title>
   <style>
-    @page {
-      size: A4;
-      margin: 2cm;
-    }
     body {
       font-family: 'Times New Roman', Times, serif;
       font-size: 12pt;
-      line-height: 1.5;
+      margin: 60px 50px 60px 70px;
       color: #000;
-      margin: 0;
-      padding: 0;
     }
-    .header {
+    .center {
       text-align: center;
-      margin-bottom: 2cm;
     }
-    .title {
-      font-size: 16pt;
-      font-weight: bold;
-      text-decoration: underline;
-      margin-bottom: 0.5cm;
-      letter-spacing: 2px;
+    .italic {
+      font-style: italic;
     }
-    .subtitle {
+    .heading-main {
       font-size: 12pt;
+      font-weight: bold;
       margin-bottom: 0;
+      letter-spacing: 1px;
+      text-decoration: underline;
     }
-    .content {
+    .heading-sub {
+      font-size: 12pt;
+      margin-top: 0;
+      margin-bottom: 30px;
+      
+    }
+    .block {
+      margin-bottom: 18px;
       text-align: justify;
-      margin-bottom: 1cm;
+      text-justify: inter-word;
     }
-    .indent {
-      text-indent: 2cm;
+    .numbered {
+      margin-bottom: 12px;
     }
-    .signature-section {
-      margin-top: 3cm;
-      text-align: right;
+    .final {
+      margin-top: 24px;
+    }
+    .signature {
+      margin-top: 40px;
+      text-align: left;
     }
     .signature-line {
-      border-top: 1px solid #000;
-      width: 6cm;
       display: inline-block;
-      margin-top: 0.5cm;
+      border-bottom: 1px dotted #000;
+      width: 220px;
+      height: 18px;
+      margin-bottom: 2px;
     }
-    .footer {
-      margin-top: 2cm;
-      font-size: 10pt;
+    .before-me {
+      margin-top: 40px;
       text-align: center;
-      color: #666;
     }
-    .data-summary {
-      background: #f9f9f9;
-      padding: 1cm;
-      border: 1px solid #ddd;
-      margin: 1cm 0;
-      border-radius: 5px;
+    .page-break {
+      page-break-before: always;
     }
-    .data-summary h3 {
-      margin-top: 0;
-      color: #333;
+    .small {
+      font-size: 10pt;
     }
-    .data-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5cm;
+    .text-indent-60{    
+      text-indent: 60px;
     }
-    .data-label {
-      font-weight: bold;
-      width: 30%;
+    ol{
+      padding-inline-start: 15px;
     }
-    .data-value {
-      width: 65%;
+    ol li::marker {
+      content: counter(list-item) ")";
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="title">STATUTORY DECLARATION</div>
-    <div class="subtitle">[Residential Property for Owner Occupation]</div>
-  </div>
-
-  <div class="content indent">
-    I/We, <strong>${data.NAME}</strong> (NRIC NO. <strong>${data.NRIC}</strong>) of <strong>${data.ADDRESS}</strong> hereby solemnly and sincerely declare as follows:
-  </div>
-
-  <div class="content">
-    That I/We am/are the purchaser(s) of the residential property located at <strong>${data.PROPERTY}</strong> and I/We hereby declare that:
-  </div>
-
-  <div class="content">
-    1. The said property will be used for owner occupation purposes only.
-  </div>
-
-  <div class="content">
-    2. I/We have obtained financing from <strong>${data.BANK}</strong> for the purchase of the said property.
-  </div>
-
-  <div class="content">
-    3. The financing facility is a <strong>${data.FACILITY}</strong> and the bank's registered address is <strong>${data.BANK_ADDRESS}</strong>.
-  </div>
-
-  <div class="content">
-    4. The branch office handling this facility is located at <strong>${data.BRANCH_ADDRESS}</strong>.
-  </div>
-
-  <div class="content">
-    5. I/We understand that this declaration is made under penalty of perjury and may be used as evidence in any legal proceedings.
-  </div>
-
-  <div class="data-summary">
-    <h3>Declaration Summary</h3>
-    <div class="data-row">
-      <span class="data-label">Declarant Name:</span>
-      <span class="data-value">${data.NAME}</span>
+    <div class="center heading-main">STATUTORY DECLARATION</div>
+    <div class="center heading-sub">[Residential Property for Owner Occupation]</div>
+    <div class="block text-indent-60">
+      I/We, <b>${data.NAME}</b> (NRIC NO. ${data.NRIC}) of <b>${data.ADDRESS}</b> hereby solemnly and sincerely declare as follows:
     </div>
-    <div class="data-row">
-      <span class="data-label">NRIC Number:</span>
-      <span class="data-value">${data.NRIC}</span>
+    <ol>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;I/We declare that the Property of <b>${data.PROPERTY}</b> ("Property") shall be occupied by me/us throughout the tenor of the Facility;
+    </li>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;The Customer, <b>${data.NAME} (NRIC NO. ${data.NRIC})</b> has applied for a Facility of <b>${data.FACILITY}</b> only ("Facility") and the Bank, <b>${data.BANK}</b>, a company incorporated in Malaysia and with its registered office at <b>${data.BANK_ADDRESS}</b> with a branch office at <b>${data.BRANCH_ADDRESS}</b> (“Financier”) has agreed to part finance the purchase of the Property by way of 1st/3rd Party Legal Charge; and
+    </li>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;I/We am/are fully aware that the declaration made herein is material to the Financier in its granting and/or allowing the utilization or disbursement of the Facility. I/We am/are also fully aware that if this declaration is tendered as evidence, I/We shall be liable to prosecution if I/We have willfully state anything herein which I/We know is false or do not believe in.
+    </li>
+    </ol>
+    <div class="block final">
+      And I/We make this solemn declaration conscientiously believing the same to be true and by virtue of the provisions of the Statutory Declarations Act, 1960.
     </div>
-    <div class="data-row">
-      <span class="data-label">Property Address:</span>
-      <span class="data-value">${data.PROPERTY}</span>
+    <div class="" style="display:flex; align-items: flex-start;">
+      <div class="block" style="width: 320px;">
+        Subscribed and solemnly declared<br>
+        by <b>${data.NAME}</b><br>
+        at in the State of<br>
+        this <b>${data.DATE}</b>
+      </div>
+      <div style="width: 10px;">
+        )<br>
+        )<br>
+        )<br>
+        )
+      </div>
+      <div class="signature" >
+        <span class="signature-line" style="margin-top:20px;"></span><br>
+        ${data.NAME}<br>
+        <span class="small">(NRIC NO. ${data.NRIC})</span>
+      </div>
     </div>
-    <div class="data-row">
-      <span class="data-label">Bank:</span>
-      <span class="data-value">${data.BANK}</span>
+    <div class="before-me">
+      Before me,
     </div>
-    <div class="data-row">
-      <span class="data-label">Facility Type:</span>
-      <span class="data-value">${data.FACILITY}</span>
+    <div class="page-break"></div>
+    <div class="center heading-main" style="margin-top:60px;">STATUTORY DECLARATION</div><br><br>
+    <div class="block text-indent-60">
+      I/We, <b>${data.NAME}</b> (NRIC NO. ${data.NRIC}) of <b>${data.ADDRESS}</b> do hereby affirm and solemnly declare that date hereof, I/We am/are not an undischarged bankrupt and that no bankruptcy proceedings have been instituted against me/us under the laws of Malaysia or in anywhere else having jurisdiction over me/us and I/We do solemnly and sincerely declare that to the best of my/our knowledge there is no legal proceeding having been instituted against me/us nor any pending legal proceedings or intended legal proceedings to be brought against me/us.
     </div>
-    <div class="data-row">
-      <span class="data-label">Declaration Date:</span>
-      <span class="data-value">${data.DATE}</span>
+    <div class="block text-indent-60">
+      I/We, make this declaration in full knowledge and awareness of your reliance on this declaration as an inducement or basis to grant/continue to grant the Facility /Facilities (as defined in the Letter of Offer) to me/us and/or to a third party for whom I/we shall be acting as Chargor and/or Guarantor and/or Assignor in your favour.
     </div>
-  </div>
-
-  <div class="signature-section">
-    <div>Dated this ${data.DATE}</div>
-    <div class="signature-line"></div>
-    <div>Signature of Declarant</div>
-  </div>
-
-  <div class="footer">
-    <p>This document was generated electronically on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-    <p>Environment: ${process.env.VERCEL === '1' ? 'Vercel Production' : 'Local Development'}</p>
-  </div>
+    <div class="block text-indent-60">
+      I/We am/are fully aware that it is a criminal offence to induce you to grant the Facility/Facilities on the basis of a false declaration.
+    </div>
+    <div class="block">
+      I/We am/are also aware that the penal consequences for making a false declaration in respect of the above may include: -
+      <br>
+      <ol>
+        <li>
+        &nbsp;&nbsp;&nbsp;imprisonment for term not exceeding 3 years and shall also be liable to a fine pursuant to Section 193 of the Penal Code read together with section 199 of the Penal code; or   
+        </li>
+        <li>
+        &nbsp;&nbsp;&nbsp;imprisonment for a term not less than 1 year and not exceeding 10 years and with whipping and shall also be liable to a fine pursuant to Section 420 of the Penal Code.   
+        </li>
+      </ol>
+     </div>
+    <div class="block final">
+      And I/We make this solemn declaration conscientiously believing the same to be true and by virtue of the provisions of the Statutory Declarations Act, 1960.
+    </div>
+    <div class="" style="display:flex; align-items: flex-start;">
+      <div class="block" style="width: 320px;">
+        Subscribed and solemnly declared<br>
+        by <b>${data.NAME}</b><br>
+        at in the State of<br>
+        this <b>${data.DATE}</b>
+      </div>
+      <div style="width: 10px;">
+        )<br>
+        )<br>
+        )<br>
+        )
+      </div>
+      <div class="signature" >
+        <span class="signature-line" style="margin-top:20px;"></span><br>
+        ${data.NAME}<br>
+        <span class="small">(NRIC NO. ${data.NRIC})</span>
+      </div>
+    </div>
+    <div class="before-me">
+      Before me,
+    </div>
 </body>
 </html>`;
 

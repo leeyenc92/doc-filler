@@ -70,6 +70,67 @@ async function testWebhook() {
   }
 }
 
+async function testWebhookPDF() {
+  isLoading.value = true
+  result.value = ''
+  error.value = ''
+  
+  try {
+    const response = await fetch('/api/webhook-vercel?format=pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/pdf'
+      },
+      body: JSON.stringify(testData.value)
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.statusMessage || `HTTP ${response.status}`)
+    }
+    
+    // Check response type and handle accordingly
+    const contentType = response.headers.get('content-type')
+    const environment = response.headers.get('x-environment')
+    const pdfAvailable = response.headers.get('x-pdf-available')
+    
+    if (contentType?.includes('application/pdf')) {
+      // PDF response - download file
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${testData.value.name.replace(/\s+/g, '_')}_Statutory_Declaration.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      result.value = `PDF download successful! (Environment: ${environment}, PDF: ${pdfAvailable === 'true' ? 'Available' : 'Not Available'})`
+    } else if (contentType?.includes('text/html')) {
+      // HTML response - show in new window (fallback)
+      const htmlContent = await response.text()
+      const newWindow = window.open('', '_blank')
+      if (newWindow) {
+        newWindow.document.write(htmlContent)
+        newWindow.document.close()
+      }
+      
+      result.value = `PDF generation failed, HTML opened instead. (Environment: ${environment}, PDF: ${pdfAvailable === 'true' ? 'Available' : 'Not Available'})`
+    } else {
+      // Unknown response type
+      const text = await response.text()
+      result.value = `PDF request completed. Response received. (Environment: ${environment}, Type: ${contentType})`
+      console.log('Response content:', text)
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : String(err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 function resetForm() {
   testData.value = {
     name: 'John Doe',
@@ -160,7 +221,17 @@ function resetForm() {
               bold 
               raised
             >
-              Test Webhook
+              Test Webhook (HTML)
+            </VButton>
+            <VButton 
+              :loading="isLoading" 
+              type="button" 
+              color="success" 
+              bold 
+              outlined
+              @click="testWebhookPDF"
+            >
+              Download PDF
             </VButton>
             <VButton 
               type="button" 
@@ -201,7 +272,7 @@ function resetForm() {
           </div>
           <div class="info-item">
             <strong>Response:</strong>
-            <code>HTML Document</code>
+            <code>HTML Document + PDF</code>
           </div>
           <div class="info-item">
             <strong>Environment:</strong>
@@ -219,12 +290,21 @@ function resetForm() {
       </div>
       
       <div class="curl-example">
-        <h2>cURL Example</h2>
+        <h2>cURL Examples</h2>
         <p>You can also test the webhook using curl:</p>
+        
+        <h3>HTML Response:</h3>
         <pre><code>curl -X POST {{ $config.public.baseURL || 'http://localhost:3000' }}/api/webhook-vercel \
   -H "Content-Type: application/json" \
   -d '{{ JSON.stringify(testData, null, 2) }}' \
   --output test_document.html</code></pre>
+        
+        <h3>PDF Response:</h3>
+        <pre><code>curl -X POST {{ $config.public.baseURL || 'http://localhost:3000' }}/api/webhook-vercel?format=pdf \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/pdf" \
+  -d '{{ JSON.stringify(testData, null, 2) }}' \
+  --output test_document.pdf</code></pre>
       </div>
     </div>
   </div>
@@ -363,6 +443,12 @@ function resetForm() {
 .curl-example h2 {
   margin-bottom: 1rem;
   color: var(--primary);
+}
+
+.curl-example h3 {
+  margin: 1.5rem 0 0.5rem 0;
+  color: var(--primary);
+  font-size: 1.1rem;
 }
 
 .curl-example pre {

@@ -20,6 +20,12 @@ const links = ref<SideblockItem[]>([
     icon: 'lucide:webhook',
     to: '/webhook-test',
   },
+  {
+    type: 'link',
+    label: 'PDF Extraction',
+    icon: 'lucide:file-text',
+    to: '/pdf-upload',
+  },
 ])
 </script>
 

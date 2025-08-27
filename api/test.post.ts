@@ -1,6 +1,6 @@
-import { H3Event, readBody } from 'h3'
+const { H3Event, readBody } = require('h3')
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event: any) => {
   try {
     // Log request details
     console.log('=== TEST ENDPOINT DEBUG ===');

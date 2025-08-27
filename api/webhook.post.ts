@@ -1,4 +1,4 @@
-import { H3Event, readBody } from 'h3'
+const { H3Event, readBody } = require('h3')
 
 // Conditional imports for hybrid approach
 let chromium: any = null;
@@ -25,7 +25,7 @@ async function loadPuppeteerDependencies() {
   }
 }
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event: any) => {
   try {
     // Load dependencies at runtime (only on non-Vercel environments)
     await loadPuppeteerDependencies();

@@ -1,4 +1,4 @@
-export default defineEventHandler(() => {
+module.exports = defineEventHandler(() => {
   return {
     status: 'healthy',
     timestamp: new Date().toISOString(),

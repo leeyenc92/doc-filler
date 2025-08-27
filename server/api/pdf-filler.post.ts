@@ -112,7 +112,7 @@ export default defineEventHandler(async (event: H3Event) => {
       &nbsp;&nbsp;&nbsp;I/We declare that the Property of <b>{{PROPERTY}}</b> ("Property") shall be occupied by me/us throughout the tenor of the Facility;
     </li>
     <li class="block numbered">
-      &nbsp;&nbsp;&nbsp;The Customer, <b>{{NAME}} (NRIC NO. {{NRIC}})</b> has applied for a Facility of {{FACILITY}} only ("Facility") and the Bank, <b>{{BANK}}</b>, a company incorporated in Malaysia and with its registered office at <b>{{BANK_ADDRESS}}</b> with a branch office at <b>{{BRANCH_ADDRESS}}</b> (“Financier”) has agreed to part finance the purchase of the Property by way of 1st/3rd Party Legal Charge; and
+      &nbsp;&nbsp;&nbsp;The Customer, <b>{{NAME}} (NRIC NO. {{NRIC}})</b> has applied for a Facility of <b>{{FACILITY}}</b> only ("Facility") and the Bank, <b>{{BANK}}</b>, a company incorporated in Malaysia and with its registered office at <b>{{BANK_ADDRESS}}</b> with a branch office at <b>{{BRANCH_ADDRESS}}</b> (“Financier”) has agreed to part finance the purchase of the Property by way of 1st/3rd Party Legal Charge; and
     </li>
     <li class="block numbered">
       &nbsp;&nbsp;&nbsp;I/We am/are fully aware that the declaration made herein is material to the Financier in its granting and/or allowing the utilization or disbursement of the Facility. I/We am/are also fully aware that if this declaration is tendered as evidence, I/We shall be liable to prosecution if I/We have willfully state anything herein which I/We know is false or do not believe in.

@@ -108,7 +108,7 @@ async function submitForm() {
       <VButton :loading="isLoading" type="submit" color="primary" bold fullwidth raised>Generate PDF</VButton>
     </form>
     <div v-if="pdfUrl" class="mt-4">
-      <a :href="pdfUrl" download="SD.pdf" target="_blank">Download Filled PDF</a>
+      <a :href="pdfUrl" download="SD.pdf" target="_blank">Generate Filled SD PDF</a>
     </div>
   </div>
 </template>

@@ -1,4 +1,4 @@
-const { readBody, createError } = require('h3')
+import { readBody, createError } from 'h3'
 
 export default defineEventHandler(async (event: any) => {
   try {

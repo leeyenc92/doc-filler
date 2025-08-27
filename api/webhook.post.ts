@@ -1,4 +1,4 @@
-const { readBody, createError } = require('h3')
+import { readBody, createError } from 'h3'
 
 // Conditional imports for hybrid approach
 let chromium: any = null;
@@ -13,9 +13,9 @@ async function loadPuppeteerDependencies() {
   }
   
   try {
-    // Use require instead of dynamic import for CommonJS compatibility
-    const chromiumModule = require('@sparticuz/chromium');
-    const puppeteerModule = require('puppeteer-core');
+         // Use dynamic import for ES module compatibility
+     const chromiumModule = await import('@sparticuz/chromium');
+     const puppeteerModule = await import('puppeteer-core');
     
     chromium = chromiumModule;
     puppeteer = puppeteerModule;
@@ -355,8 +355,8 @@ export default defineEventHandler(async (event: any) => {
           try {
             console.log('Trying fallback: launching without Chromium...');
             
-            // Try to find system Chrome/Edge
-            const { execSync } = require('child_process');
+                         // Try to find system Chrome/Edge
+             const { execSync } = await import('child_process');
             let executablePath = null;
             
             try {

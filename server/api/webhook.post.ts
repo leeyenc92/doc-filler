@@ -6,20 +6,30 @@ let puppeteer: any = null;
 
 // Function to load Puppeteer dependencies
 async function loadPuppeteerDependencies() {
-  if (process.env.VERCEL !== '1') {
-    try {
-      chromium = await import('@sparticuz/chromium');
-      puppeteer = await import('puppeteer-core');
-    } catch (error: any) {
-      console.warn('Puppeteer dependencies not available:', error.message);
-    }
+  // Skip loading Puppeteer on Vercel
+  if (process.env.VERCEL === '1') {
+    console.log('Running on Vercel - skipping Puppeteer dependencies');
+    return;
+  }
+  
+  try {
+    // Use require instead of dynamic import for CommonJS compatibility
+    const chromiumModule = require('@sparticuz/chromium');
+    const puppeteerModule = require('puppeteer-core');
+    
+    chromium = chromiumModule;
+    puppeteer = puppeteerModule;
+    console.log('Puppeteer dependencies loaded successfully');
+  } catch (error: any) {
+    console.warn('Puppeteer dependencies not available:', error.message);
   }
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  // Load dependencies at runtime
-  await loadPuppeteerDependencies();
   try {
+    // Load dependencies at runtime (only on non-Vercel environments)
+    await loadPuppeteerDependencies();
+    
     // Verify the request method
     if (event.method !== 'POST') {
       throw createError({

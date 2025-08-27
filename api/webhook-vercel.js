@@ -234,37 +234,63 @@ export default async function handler(req, res) {
         // Use a PDF generation service (you can choose one of these options)
         let pdfBuffer;
         
-        // Option 1: Use a free PDF generation service
-        const pdfResponse = await fetch('https://api.html2pdf.app/v1/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            html: html,
-            options: {
-              format: 'A4',
-              margin: '2cm',
-              printBackground: true
-            }
-          })
-        });
+        // Use html2pdf.app service with API key
+        const pdfApiKey = process.env['pdf_api_key'];
         
-        if (pdfResponse.ok) {
-          pdfBuffer = await pdfResponse.arrayBuffer();
+        if (!pdfApiKey) {
+          console.log('PDF API key not found, falling back to HTML');
+          throw new Error('PDF API key not configured');
+        }
+        
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        try {
+          const pdfResponse = await fetch('https://api.html2pdf.app/v1/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${pdfApiKey}`
+            },
+            body: JSON.stringify({
+              html: html,
+              options: {
+                format: 'A4',
+                margin: '2cm',
+                printBackground: true
+              }
+            }),
+            signal: controller.signal
+          });
           
-          // Set PDF response headers
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="Statutory_Declaration_${data.NAME.replace(/\s+/g, '_')}.pdf"`);
-          res.setHeader('X-Environment', process.env.VERCEL === '1' ? 'Vercel' : 'Local/Development');
-          res.setHeader('X-PDF-Available', 'true');
-          res.setHeader('X-Module-System', 'Pure JavaScript');
+          clearTimeout(timeoutId);
           
-          // Send PDF response
-          res.status(200).send(Buffer.from(pdfBuffer));
-          return;
-        } else {
-          console.log('PDF service failed, falling back to HTML');
+          if (pdfResponse.ok) {
+            pdfBuffer = await pdfResponse.arrayBuffer();
+            
+            // Set PDF response headers
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="Statutory_Declaration_${data.NAME.replace(/\s+/g, '_')}.pdf"`);
+            res.setHeader('X-Environment', process.env.VERCEL === '1' ? 'Vercel' : 'Local/Development');
+            res.setHeader('X-PDF-Available', 'true');
+            res.setHeader('X-Module-System', 'Pure JavaScript');
+            
+            // Send PDF response
+            res.status(200).send(Buffer.from(pdfBuffer));
+            return;
+          } else {
+            const errorText = await pdfResponse.text();
+            console.log(`PDF service failed with status ${pdfResponse.status}: ${errorText}`);
+            throw new Error(`PDF service error: ${pdfResponse.status}`);
+          }
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === 'AbortError') {
+            console.log('PDF generation timed out, falling back to HTML');
+          } else {
+            console.log('PDF generation failed, falling back to HTML:', fetchError.message);
+          }
         }
       } catch (pdfError) {
         console.log('PDF generation failed, falling back to HTML:', pdfError.message);

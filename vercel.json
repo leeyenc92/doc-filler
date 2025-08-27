@@ -1,12 +1,12 @@
 {
   "functions": {
-    "api/webhook-express.post.ts": {
+    "api/webhook-vercel.js": {
       "maxDuration": 30
     }
   },
   "headers": [
     {
-      "source": "/api/webhook-express",
+      "source": "/api/webhook-vercel",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",

@@ -82,7 +82,12 @@ export default async function handler(req, res) {
       margin: 60px 50px 60px 70px;
       color: #000;
     }
-    .center { text-align: center; }
+    .center {
+      text-align: center;
+    }
+    .italic {
+      font-style: italic;
+    }
     .heading-main {
       font-size: 12pt;
       font-weight: bold;
@@ -94,40 +99,141 @@ export default async function handler(req, res) {
       font-size: 12pt;
       margin-top: 0;
       margin-bottom: 30px;
+      
     }
     .block {
       margin-bottom: 18px;
       text-align: justify;
       text-justify: inter-word;
     }
-    .text-indent-60 { text-indent: 60px; }
+    .numbered {
+      margin-bottom: 12px;
+    }
+    .final {
+      margin-top: 24px;
+    }
+    .signature {
+      margin-top: 40px;
+      text-align: left;
+    }
+    .signature-line {
+      display: inline-block;
+      border-bottom: 1px dotted #000;
+      width: 220px;
+      height: 18px;
+      margin-bottom: 2px;
+    }
+    .before-me {
+      margin-top: 40px;
+      text-align: center;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    .small {
+      font-size: 10pt;
+    }
+    .text-indent-60{    
+      text-indent: 60px;
+    }
+    ol{
+      padding-inline-start: 15px;
+    }
+    ol li::marker {
+      content: counter(list-item) ")";
+    }
   </style>
 </head>
 <body>
-  <div class="center heading-main">STATUTORY DECLARATION</div>
-  <div class="center heading-sub">[Residential Property for Owner Occupation]</div>
-  <div class="block text-indent-60">
-    I/We, <b>${data.NAME}</b> (NRIC NO. ${data.NRIC}) of <b>${data.ADDRESS}</b> hereby solemnly and sincerely declare as follows:
-  </div>
-  <div class="block">
-    This is a simplified version of the statutory declaration. The full document would contain all the legal text and formatting.
-  </div>
-  <div class="block">
-    <strong>Data Received:</strong><br>
-    Name: ${data.NAME}<br>
-    NRIC: ${data.NRIC}<br>
-    Address: ${data.ADDRESS}<br>
-    Property: ${data.PROPERTY}<br>
-    Bank: ${data.BANK}<br>
-    Facility: ${data.FACILITY}<br>
-    Date: ${data.DATE}
-  </div>
-  <div class="block">
-    <strong>Environment:</strong> ${process.env.VERCEL === '1' ? 'Vercel' : 'Local/Development'}
-  </div>
-  <div class="block">
-    <strong>Module System:</strong> Pure JavaScript (no TypeScript compilation issues)
-  </div>
+    <div class="center heading-main">STATUTORY DECLARATION</div>
+    <div class="center heading-sub">[Residential Property for Owner Occupation]</div>
+    <div class="block text-indent-60">
+      I/We, <b>{{NAME}}</b> (NRIC NO. {{NRIC}}) of <b>{{ADDRESS}}</b> hereby solemnly and sincerely declare as follows:
+    </div>
+    <ol>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;I/We declare that the Property of <b>{{PROPERTY}}</b> ("Property") shall be occupied by me/us throughout the tenor of the Facility;
+    </li>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;The Customer, <b>{{NAME}} (NRIC NO. {{NRIC}})</b> has applied for a Facility of <b>{{FACILITY}}</b> only ("Facility") and the Bank, <b>{{BANK}}</b>, a company incorporated in Malaysia and with its registered office at <b>{{BANK_ADDRESS}}</b> with a branch office at <b>{{BRANCH_ADDRESS}}</b> (“Financier”) has agreed to part finance the purchase of the Property by way of 1st/3rd Party Legal Charge; and
+    </li>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;I/We am/are fully aware that the declaration made herein is material to the Financier in its granting and/or allowing the utilization or disbursement of the Facility. I/We am/are also fully aware that if this declaration is tendered as evidence, I/We shall be liable to prosecution if I/We have willfully state anything herein which I/We know is false or do not believe in.
+    </li>
+    </ol>
+    <div class="block final">
+      And I/We make this solemn declaration conscientiously believing the same to be true and by virtue of the provisions of the Statutory Declarations Act, 1960.
+    </div>
+    <div class="" style="display:flex; align-items: flex-start;">
+      <div class="block" style="width: 320px;">
+        Subscribed and solemnly declared<br>
+        by <b>{{NAME}}</b><br>
+        at in the State of<br>
+        this <b>{{DATE}}</b>
+      </div>
+      <div style="width: 10px;">
+        )<br>
+        )<br>
+        )<br>
+        )
+      </div>
+      <div class="signature" >
+        <span class="signature-line" style="margin-top:20px;"></span><br>
+        {{NAME}}<br>
+        <span class="small">(NRIC NO. {{NRIC}})</span>
+      </div>
+    </div>
+    <div class="before-me">
+      Before me,
+    </div>
+    <div class="page-break"></div>
+    <div class="center heading-main" style="margin-top:60px;">STATUTORY DECLARATION</div><br><br>
+    <div class="block text-indent-60">
+      I/We, <b>{{NAME}}</b> (NRIC NO. {{NRIC}}) of <b>{{ADDRESS}}</b> do hereby affirm and solemnly declare that date hereof, I/We am/are not an undischarged bankrupt and that no bankruptcy proceedings have been instituted against me/us under the laws of Malaysia or in anywhere else having jurisdiction over me/us and I/We do solemnly and sincerely declare that to the best of my/our knowledge there is no legal proceeding having been instituted against me/us nor any pending legal proceedings or intended legal proceedings to be brought against me/us.
+    </div>
+    <div class="block text-indent-60">
+      I/We, make this declaration in full knowledge and awareness of your reliance on this declaration as an inducement or basis to grant/continue to grant the Facility /Facilities (as defined in the Letter of Offer) to me/us and/or to a third party for whom I/we shall be acting as Chargor and/or Guarantor and/or Assignor in your favour.
+    </div>
+    <div class="block text-indent-60">
+      I/We am/are fully aware that it is a criminal offence to induce you to grant the Facility/Facilities on the basis of a false declaration.
+    </div>
+    <div class="block">
+      I/We am/are also aware that the penal consequences for making a false declaration in respect of the above may include: -
+      <br>
+      <ol>
+        <li>
+        &nbsp;&nbsp;&nbsp;imprisonment for term not exceeding 3 years and shall also be liable to a fine pursuant to Section 193 of the Penal Code read together with section 199 of the Penal code; or   
+        </li>
+        <li>
+        &nbsp;&nbsp;&nbsp;imprisonment for a term not less than 1 year and not exceeding 10 years and with whipping and shall also be liable to a fine pursuant to Section 420 of the Penal Code.   
+        </li>
+      </ol>
+     </div>
+    <div class="block final">
+      And I/We make this solemn declaration conscientiously believing the same to be true and by virtue of the provisions of the Statutory Declarations Act, 1960.
+    </div>
+    <div class="" style="display:flex; align-items: flex-start;">
+      <div class="block" style="width: 320px;">
+        Subscribed and solemnly declared<br>
+        by <b>{{NAME}}</b><br>
+        at in the State of<br>
+        this <b>{{DATE}}</b>
+      </div>
+      <div style="width: 10px;">
+        )<br>
+        )<br>
+        )<br>
+        )
+      </div>
+      <div class="signature" >
+        <span class="signature-line" style="margin-top:20px;"></span><br>
+        {{NAME}}<br>
+        <span class="small">(NRIC NO. {{NRIC}})</span>
+      </div>
+    </div>
+    <div class="before-me">
+      Before me,
+    </div>
 </body>
 </html>`;
 

@@ -1,12 +1,12 @@
 {
   "functions": {
-    "api/webhook.post.ts": {
+    "api/webhook-express.post.ts": {
       "maxDuration": 30
     }
   },
   "headers": [
     {
-      "source": "/api/webhook",
+      "source": "/api/webhook-express",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",

@@ -237,6 +237,9 @@ export default async function handler(req, res) {
         // Use html2pdf.app service with API key
         const pdfApiKey = process.env['pdf_api_key'];
         
+        console.log('PDF API key found:', pdfApiKey ? `${pdfApiKey.substring(0, 10)}...` : 'NOT FOUND');
+        console.log('Environment variables:', Object.keys(process.env).filter(key => key.includes('pdf')));
+        
         if (!pdfApiKey) {
           console.log('PDF API key not found, falling back to HTML');
           throw new Error('PDF API key not configured');
@@ -247,19 +250,23 @@ export default async function handler(req, res) {
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
         
         try {
-          const pdfResponse = await fetch('https://api.html2pdf.app/v1/generate?html=https://doc-filler.vercel.app', {
+          console.log('Making PDF request with API key:', `${pdfApiKey.substring(0, 10)}...`);
+          console.log('Using html2pdf.app query parameter authentication method');
+          
+          // According to html2pdf.app docs, apiKey should be a query parameter
+          const pdfResponse = await fetch(`https://api.html2pdf.app/v1/generate?apiKey=${encodeURIComponent(pdfApiKey)}`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${pdfApiKey}`
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               html: html,
-              options: {
-                format: 'A4',
-                margin: '2cm',
-                printBackground: true
-              }
+              format: 'A4',
+              marginTop: 75,  // 2cm in pixels (approximately)
+              marginRight: 75,
+              marginBottom: 75,
+              marginLeft: 75,
+              media: 'print'  // Use print styles for better PDF output
             }),
             signal: controller.signal
           });

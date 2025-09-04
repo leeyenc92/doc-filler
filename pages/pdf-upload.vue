@@ -148,12 +148,13 @@
       
       <div class="webhook-info">
         <h2>Webhook Integration</h2>
-        <p>This feature integrates with your n8n workflow at:</p>
-        <code class="webhook-url">https://evident-fox-nationally.ngrok-free.app/webhook-test/doc-extraction</code>
+        <p>This feature integrates with your n8n workflow via proxy endpoint:</p>
+        <code class="webhook-url">/api/webhook-proxy</code>
+        <p class="webhook-note">Proxy forwards to: https://evident-fox-nationally.ngrok-free.app/webhook-test/doc-extraction</p>
         
         <div class="webhook-details">
           <h3>Request Format:</h3>
-          <pre><code>POST /webhook-test/doc-extraction
+          <pre><code>POST /api/webhook-proxy
 Content-Type: multipart/form-data
 
 {
@@ -326,7 +327,7 @@ async function processDocumentAttempt() {
   formData.append('filename', selectedFile.value.name)
   formData.append('timestamp', new Date().toISOString())
   
-  const response = await fetch('https://evident-fox-nationally.ngrok-free.app/webhook-test/doc-extraction', {
+  const response = await fetch('/api/webhook-proxy', {
     method: 'POST',
     body: formData
   })
@@ -913,6 +914,13 @@ async function generatePDF() {
   font-size: 0.9rem;
   margin: 1rem 0;
   word-break: break-all;
+}
+
+.webhook-note {
+  font-size: 0.9rem;
+  color: var(--light-text);
+  margin: 0.5rem 0 1rem 0;
+  font-style: italic;
 }
 
 .webhook-details h3 {

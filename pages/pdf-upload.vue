@@ -108,6 +108,15 @@
           >
             Copy to Clipboard
           </VButton>
+          
+          <VButton 
+            type="button" 
+            color="primary" 
+            :loading="isGeneratingPdf"
+            @click="generatePDF"
+          >
+            {{ isGeneratingPdf ? 'Generating PDF...' : 'Generate PDF' }}
+          </VButton>
         </div>
       </div>
       
@@ -127,8 +136,12 @@
             <span>Get structured data in JSON format</span>
           </div>
           <div class="info-item">
-            <strong>4. Use:</strong>
-            <span>Download or copy data for your workflows</span>
+            <strong>4. Generate:</strong>
+            <span>Create a formatted PDF document from extracted data</span>
+          </div>
+          <div class="info-item">
+            <strong>5. Use:</strong>
+            <span>Download PDF, JSON data, or copy for your workflows</span>
           </div>
         </div>
       </div>
@@ -183,6 +196,7 @@ const isProcessing = ref(false)
 const result = ref('')
 const error = ref('')
 const extractedData = ref<any>(null)
+const isGeneratingPdf = ref(false)
 
 // File size limit (10MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -324,6 +338,297 @@ async function copyToClipboard() {
     result.value = 'Data copied to clipboard!'
   } catch (err) {
     error.value = 'Failed to copy to clipboard'
+  }
+}
+
+async function generatePDF() {
+  if (!extractedData.value) return
+  
+  isGeneratingPdf.value = true
+  error.value = ''
+  
+  try {
+    // Map extracted data following webhook-vercel.js pattern
+    const webhookData = extractedData.value;
+    
+    const formData = {
+      purchasers: Array.isArray(webhookData.purchasers) 
+        ? webhookData.purchasers 
+        : webhookData.purchaser 
+        ? [webhookData.purchaser]
+        : [{
+            name: webhookData.name || webhookData.purchaserName || webhookData.customerName || webhookData.NAME || webhookData.full_name || '',
+            ic: webhookData.ic || webhookData.nric || webhookData.icNumber || webhookData.customerIc || webhookData.NRIC || webhookData.id_number || ''
+          }],
+      address: webhookData.address || webhookData.customerAddress || webhookData.ADDRESS || webhookData.full_address || '',
+      property: webhookData.property || webhookData.propertyDetails || webhookData.propertyAddress || webhookData.PROPERTY || '',
+      bank: webhookData.bank || webhookData.bankName || webhookData.BANK || '',
+      bankAddress: webhookData.bankAddress || webhookData.bankRegisteredAddress || webhookData.BANK_ADDRESS || webhookData.bank_address || '',
+      branchAddress: webhookData.branchAddress || webhookData.branchOfficeAddress || webhookData.BRANCH_ADDRESS || webhookData.branch_address || '',
+      facility: webhookData.facility || webhookData.facilityType || webhookData.loanType || webhookData.FACILITY || webhookData.loan_amount || '',
+      date: webhookData.date || webhookData.declarationDate || webhookData.DATE || new Date().toISOString().split('T')[0]
+    };
+
+    // Validate required fields
+    const requiredFields = ['purchasers', 'address', 'property', 'bank', 'bankAddress', 'branchAddress', 'facility', 'date'];
+    const missingFields = requiredFields.filter(field => {
+      if (field === 'purchasers') {
+        return !formData.purchasers || formData.purchasers.length === 0 || 
+               !formData.purchasers[0].name || !formData.purchasers[0].ic;
+      }
+      return !formData[field];
+    });
+
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+
+    // Generate data for document following webhook-vercel.js pattern
+    const firstPurchaser = formData.purchasers[0];
+    const data = {
+      NAME: firstPurchaser.name,
+      NRIC: firstPurchaser.ic,
+      ADDRESS: formData.address,
+      PROPERTY: formData.property,
+      BANK: formData.bank,
+      BANK_ADDRESS: formData.bankAddress,
+      BRANCH_ADDRESS: formData.branchAddress,
+      FACILITY: formData.facility,
+      DATE: formData.date,
+    };
+    
+    // Generate HTML content following webhook-vercel.js pattern
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Statutory Declaration</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      margin: 60px 50px 60px 70px;
+      color: #000;
+    }
+    .center {
+      text-align: center;
+    }
+    .italic {
+      font-style: italic;
+    }
+    .heading-main {
+      font-size: 12pt;
+      font-weight: bold;
+      margin-bottom: 0;
+      letter-spacing: 1px;
+      text-decoration: underline;
+    }
+    .heading-sub {
+      font-size: 12pt;
+      margin-top: 0;
+      margin-bottom: 30px;
+      
+    }
+    .block {
+      margin-bottom: 18px;
+      text-align: justify;
+      text-justify: inter-word;
+    }
+    .numbered {
+      margin-bottom: 12px;
+    }
+    .final {
+      margin-top: 24px;
+    }
+    .signature {
+      margin-top: 40px;
+      text-align: left;
+    }
+    .signature-line {
+      display: inline-block;
+      border-bottom: 1px dotted #000;
+      width: 220px;
+      height: 18px;
+      margin-bottom: 2px;
+    }
+    .before-me {
+      margin-top: 40px;
+      text-align: center;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    .small {
+      font-size: 10pt;
+    }
+    .text-indent-60{    
+      text-indent: 60px;
+    }
+    ol{
+      padding-inline-start: 15px;
+    }
+    ol li::marker {
+      content: counter(list-item) ")";
+    }
+  </style>
+</head>
+<body>
+    <div class="center heading-main">STATUTORY DECLARATION</div>
+    <div class="center heading-sub">[Residential Property for Owner Occupation]</div>
+    <div class="block text-indent-60">
+      I/We, <b>${data.NAME}</b> (NRIC NO. ${data.NRIC}) of <b>${data.ADDRESS}</b> hereby solemnly and sincerely declare as follows:
+    </div>
+    <ol>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;I/We declare that the Property of <b>${data.PROPERTY}</b> ("Property") shall be occupied by me/us throughout the tenor of the Facility;
+    </li>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;The Customer, <b>${data.NAME} (NRIC NO. ${data.NRIC})</b> has applied for a Facility of <b>${data.FACILITY}</b> only ("Facility") and the Bank, <b>${data.BANK}</b>, a company incorporated in Malaysia and with its registered office at <b>${data.BANK_ADDRESS}</b> with a branch office at <b>${data.BRANCH_ADDRESS}</b> ("Financier") has agreed to part finance the purchase of the Property by way of 1st/3rd Party Legal Charge; and
+    </li>
+    <li class="block numbered">
+      &nbsp;&nbsp;&nbsp;I/We am/are fully aware that the declaration made herein is material to the Financier in its granting and/or allowing the utilization or disbursement of the Facility. I/We am/are also fully aware that if this declaration is tendered as evidence, I/We shall be liable to prosecution if I/We have willfully state anything herein which I/We know is false or do not believe in.
+    </li>
+    </ol>
+    <div class="block final">
+      And I/We make this solemn declaration conscientiously believing the same to be true and by virtue of the provisions of the Statutory Declarations Act, 1960.
+    </div>
+    <div class="" style="display:flex; align-items: flex-start;">
+      <div class="block" style="width: 320px;">
+        Subscribed and solemnly declared<br>
+        by <b>${data.NAME}</b><br>
+        at in the State of<br>
+        this <b>${data.DATE}</b>
+      </div>
+      <div style="width: 10px;">
+        )<br>
+        )<br>
+        )<br>
+        )
+      </div>
+      <div class="signature" >
+        <span class="signature-line" style="margin-top:20px;"></span><br>
+        ${data.NAME}<br>
+        <span class="small">(NRIC NO. ${data.NRIC})</span>
+      </div>
+    </div>
+    <div class="before-me">
+      Before me,
+    </div>
+    <div class="page-break"></div>
+    <div class="center heading-main" style="margin-top:60px;">STATUTORY DECLARATION</div><br><br>
+    <div class="block text-indent-60">
+      I/We, <b>${data.NAME}</b> (NRIC NO. ${data.NRIC}) of <b>${data.ADDRESS}</b> do hereby affirm and solemnly declare that date hereof, I/We am/are not an undischarged bankrupt and that no bankruptcy proceedings have been instituted against me/us under the laws of Malaysia or in anywhere else having jurisdiction over me/us and I/We do solemnly and sincerely declare that to the best of my/our knowledge there is no legal proceeding having been instituted against me/us nor any pending legal proceedings or intended legal proceedings to be brought against me/us.
+    </div>
+    <div class="block text-indent-60">
+      I/We, make this declaration in full knowledge and awareness of your reliance on this declaration as an inducement or basis to grant/continue to grant the Facility /Facilities (as defined in the Letter of Offer) to me/us and/or to a third party for whom I/we shall be acting as Chargor and/or Guarantor and/or Assignor in your favour.
+    </div>
+    <div class="block text-indent-60">
+      I/We am/are fully aware that it is a criminal offence to induce you to grant the Facility/Facilities on the basis of a false declaration.
+    </div>
+    <div class="block">
+      I/We am/are also aware that the penal consequences for making a false declaration in respect of the above may include: -
+      <br>
+      <ol>
+        <li>
+        &nbsp;&nbsp;&nbsp;imprisonment for term not exceeding 3 years and shall also be liable to a fine pursuant to Section 193 of the Penal Code read together with section 199 of the Penal code; or   
+        </li>
+        <li>
+        &nbsp;&nbsp;&nbsp;imprisonment for a term not less than 1 year and not exceeding 10 years and with whipping and shall also be liable to a fine pursuant to Section 420 of the Penal Code.   
+        </li>
+      </ol>
+     </div>
+    <div class="block final">
+      And I/We make this solemn declaration conscientiously believing the same to be true and by virtue of the provisions of the Statutory Declarations Act, 1960.
+    </div>
+    <div class="" style="display:flex; align-items: flex-start;">
+      <div class="block" style="width: 320px;">
+        Subscribed and solemnly declared<br>
+        by <b>${data.NAME}</b><br>
+        at in the State of<br>
+        this <b>${data.DATE}</b>
+      </div>
+      <div style="width: 10px;">
+        )<br>
+        )<br>
+        )<br>
+        )
+      </div>
+      <div class="signature" >
+        <span class="signature-line" style="margin-top:20px;"></span><br>
+        ${data.NAME}<br>
+        <span class="small">(NRIC NO. ${data.NRIC})</span>
+      </div>
+    </div>
+    <div class="before-me">
+      Before me,
+    </div>
+</body>
+</html>`;
+
+    // Use html2pdf.app service (same as webhook-vercel.js)
+    const pdfApiKey = process.env.NUXT_PDF_API_KEY || 'your-api-key-here';
+    
+    if (!pdfApiKey || pdfApiKey === 'your-api-key-here') {
+      throw new Error('PDF API key not configured. Please set NUXT_PDF_API_KEY environment variable.');
+    }
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const pdfResponse = await fetch(`https://api.html2pdf.app/v1/generate?apiKey=${encodeURIComponent(pdfApiKey)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          html: html,
+          format: 'A4',
+          marginTop: 75,  // 2cm in pixels (approximately)
+          marginRight: 75,
+          marginBottom: 75,
+          marginLeft: 75,
+          media: 'print'  // Use print styles for better PDF output
+        }),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (pdfResponse.ok) {
+        const pdfBlob = await pdfResponse.blob();
+        
+        // Create download link
+        const url = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Statutory_Declaration_${data.NAME.replace(/\s+/g, '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        result.value = 'PDF generated and downloaded successfully!';
+      } else {
+        const errorText = await pdfResponse.text();
+        throw new Error(`PDF service error: ${pdfResponse.status} - ${errorText}`);
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('PDF generation timed out. Please try again.');
+      } else {
+        throw new Error(`PDF generation failed: ${fetchError.message}`);
+      }
+    }
+    
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to generate PDF'
+    console.error('PDF generation error:', err)
+  } finally {
+    isGeneratingPdf.value = false
   }
 }
 </script>

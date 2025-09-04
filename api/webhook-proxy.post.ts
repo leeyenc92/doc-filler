@@ -1,15 +1,15 @@
-import { H3Event, readMultipartFormData } from 'h3'
+import { defineEventHandler, readMultipartFormData } from 'h3'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event: any) => {
   try {
     // Get the multipart form data from the request
     const formData = await readMultipartFormData(event)
     
     if (!formData || formData.length === 0) {
-      throw createError({
+      return {
         statusCode: 400,
         statusMessage: 'No form data provided'
-      })
+      }
     }
 
     // Find the file in the form data
@@ -18,10 +18,10 @@ export default defineEventHandler(async (event: H3Event) => {
     const timestamp = formData.find(item => item.name === 'timestamp')?.data?.toString() || new Date().toISOString()
 
     if (!fileData || !fileData.data) {
-      throw createError({
+      return {
         statusCode: 400,
         statusMessage: 'No file provided'
-      })
+      }
     }
 
     // Create FormData for the n8n webhook
@@ -40,14 +40,14 @@ export default defineEventHandler(async (event: H3Event) => {
     const responseText = await n8nResponse.text()
     
     console.log('N8N Response Status:', n8nResponse.status)
-    console.log('N8N Response Headers:', Object.fromEntries(n8nResponse.headers.entries()))
+    console.log('N8N Response Headers:', Object.fromEntries(n8nResponse.headers))
     console.log('N8N Response Body:', responseText)
 
     // Set CORS headers
-    setHeader(event, 'Access-Control-Allow-Origin', '*')
-    setHeader(event, 'Access-Control-Allow-Methods', 'POST, OPTIONS')
-    setHeader(event, 'Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    setHeader(event, 'Content-Type', 'application/json')
+    event.node.res.setHeader('Access-Control-Allow-Origin', '*')
+    event.node.res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    event.node.res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    event.node.res.setHeader('Content-Type', 'application/json')
 
     // Return the response from n8n
     if (n8nResponse.ok) {
@@ -77,14 +77,14 @@ export default defineEventHandler(async (event: H3Event) => {
     console.error('Webhook proxy error:', error)
     
     // Set CORS headers even for errors
-    setHeader(event, 'Access-Control-Allow-Origin', '*')
-    setHeader(event, 'Access-Control-Allow-Methods', 'POST, OPTIONS')
-    setHeader(event, 'Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    setHeader(event, 'Content-Type', 'application/json')
+    event.node.res.setHeader('Access-Control-Allow-Origin', '*')
+    event.node.res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    event.node.res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    event.node.res.setHeader('Content-Type', 'application/json')
 
-    throw createError({
+    return {
       statusCode: 500,
       statusMessage: error instanceof Error ? error.message : 'Internal server error'
-    })
+    }
   }
 })

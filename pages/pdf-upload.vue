@@ -162,7 +162,7 @@ Content-Type: multipart/form-data
   "timestamp": "2024-01-01T00:00:00Z"
 }</code></pre>
           
-          <h3>Response Format:</h3>
+          <h3>Expected Response Format:</h3>
           <pre><code>{
   "success": true,
   "data": {
@@ -171,6 +171,22 @@ Content-Type: multipart/form-data
     "processing_time": "2.3s"
   }
 }</code></pre>
+          
+          <h3>Troubleshooting:</h3>
+          <div class="troubleshooting">
+            <div class="trouble-item">
+              <strong>"Workflow was started" error:</strong>
+              <span>Your n8n workflow is triggering but not returning data. Check that your workflow has a "Respond to Webhook" node that returns the extracted data.</span>
+            </div>
+            <div class="trouble-item">
+              <strong>Timeout errors:</strong>
+              <span>The system will retry up to 3 times with exponential backoff. Check your n8n workflow performance.</span>
+            </div>
+            <div class="trouble-item">
+              <strong>Invalid JSON response:</strong>
+              <span>Ensure your n8n workflow returns valid JSON. Check the browser console for detailed error logs.</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -273,36 +289,87 @@ async function processDocument() {
   result.value = ''
   extractedData.value = null
   
+  // Retry mechanism for n8n webhook issues
+  const maxRetries = 3
+  let lastError = null
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Attempt ${attempt}/${maxRetries}`)
+      
+      const result = await processDocumentAttempt()
+      if (result) {
+        return result
+      }
+    } catch (err) {
+      lastError = err
+      console.error(`Attempt ${attempt} failed:`, err)
+      
+      if (attempt < maxRetries) {
+        // Wait before retry (exponential backoff)
+        const delay = Math.pow(2, attempt) * 1000
+        console.log(`Retrying in ${delay}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  
+  // All retries failed
+  error.value = lastError instanceof Error ? lastError.message : String(lastError)
+  console.error('Document processing failed after all retries:', lastError)
+  isProcessing.value = false
+}
+
+async function processDocumentAttempt() {
+  const formData = new FormData()
+  formData.append('file', selectedFile.value)
+  formData.append('filename', selectedFile.value.name)
+  formData.append('timestamp', new Date().toISOString())
+  
+  const response = await fetch('https://evident-fox-nationally.ngrok-free.app/webhook-test/doc-extraction', {
+    method: 'POST',
+    body: formData
+  })
+  
+  console.log('Response status:', response.status)
+  console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+  
+  if (!response.ok) {
+    const errorData = await response.text()
+    console.error('Error response:', errorData)
+    throw new Error(`HTTP ${response.status}: ${errorData}`)
+  }
+  
+  const responseText = await response.text()
+  console.log('Raw response:', responseText)
+  
+  let data
   try {
-    const formData = new FormData()
-    formData.append('file', selectedFile.value)
-    formData.append('filename', selectedFile.value.name)
-    formData.append('timestamp', new Date().toISOString())
-    
-    const response = await fetch('https://evident-fox-nationally.ngrok-free.app/webhook-test/doc-extraction', {
-      method: 'POST',
-      body: formData
-    })
-    
-    if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`HTTP ${response.status}: ${errorData}`)
-    }
-    
-    const data = await response.json()
-    
-    if (data.success) {
-      extractedData.value = data.data.extracted_fields || data.data
-      result.value = `Document processed successfully! Extracted ${Object.keys(extractedData.value).length} fields.`
-    } else {
-      throw new Error(data.message || 'Document processing failed')
-    }
-    
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err)
-    console.error('Document processing error:', err)
-  } finally {
+    data = JSON.parse(responseText)
+  } catch (parseError) {
+    console.error('JSON parse error:', parseError)
+    throw new Error(`Invalid JSON response: ${responseText}`)
+  }
+  
+  console.log('Parsed data:', data)
+  
+  // Handle different response formats from n8n
+  if (data.success) {
+    extractedData.value = data.data.extracted_fields || data.data
+    result.value = `Document processed successfully! Extracted ${Object.keys(extractedData.value).length} fields.`
     isProcessing.value = false
+    return true
+  } else if (data.message && data.message.includes('Workflow was started')) {
+    // n8n webhook started but didn't return data immediately
+    throw new Error('Workflow started but no data returned. Please check your n8n workflow configuration.')
+  } else if (data.data) {
+    // Direct data response
+    extractedData.value = data.data.extracted_fields || data.data
+    result.value = `Document processed successfully! Extracted ${Object.keys(extractedData.value).length} fields.`
+    isProcessing.value = false
+    return true
+  } else {
+    throw new Error(data.message || data.error || 'Document processing failed - no data received')
   }
 }
 
@@ -864,6 +931,32 @@ async function generatePDF() {
 
 .webhook-details code {
   font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.troubleshooting {
+  margin-top: 1rem;
+}
+
+.trouble-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--background);
+  border-radius: 6px;
+  border-left: 4px solid var(--warning);
+  margin-bottom: 1rem;
+}
+
+.trouble-item strong {
+  color: var(--warning);
+  font-size: 0.9rem;
+}
+
+.trouble-item span {
+  color: var(--light-text);
   font-size: 0.9rem;
   line-height: 1.4;
 }

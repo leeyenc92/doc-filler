@@ -1,18 +1,18 @@
-export default defineEventHandler(async (event) => {
+export default async function handler(req, res) {
   try {
     // Verify the request method
-    if (getMethod(event) !== 'POST') {
-      throw createError({
+    if (req.method !== 'POST') {
+      return res.status(405).json({
         statusCode: 405,
         statusMessage: 'Method Not Allowed'
       })
     }
 
     // Read the request body
-    const body = await readBody(event)
+    const body = req.body
     
     if (!body.extractedData) {
-      throw createError({
+      return res.status(400).json({
         statusCode: 400,
         statusMessage: 'Missing extractedData in request body'
       })
@@ -148,7 +148,7 @@ export default defineEventHandler(async (event) => {
     const pdfApiKey = process.env.pdf_api_key || process.env.NUXT_PDF_API_KEY
     
     if (!pdfApiKey) {
-      throw createError({
+      return res.status(500).json({
         statusCode: 500,
         statusMessage: 'PDF API key not configured. Please set pdf_api_key or NUXT_PDF_API_KEY environment variable.'
       })
@@ -190,16 +190,17 @@ export default defineEventHandler(async (event) => {
       const pdfBuffer = await pdfResponse.arrayBuffer()
       
       // Set appropriate headers for PDF download
-      setHeader(event, 'Content-Type', 'application/pdf')
-      setHeader(event, 'Content-Disposition', 'attachment; filename="statutory_declaration.pdf"')
-      setHeader(event, 'Content-Length', pdfBuffer.byteLength)
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', 'attachment; filename="statutory_declaration.pdf"')
+      res.setHeader('Content-Length', pdfBuffer.byteLength)
 
-      return new Uint8Array(pdfBuffer)
+      // Send the PDF buffer
+      res.send(Buffer.from(pdfBuffer))
 
-    } catch (error: any) {
+    } catch (error) {
       clearTimeout(timeoutId)
       if (error.name === 'AbortError') {
-        throw createError({
+        return res.status(408).json({
           statusCode: 408,
           statusMessage: 'PDF generation timeout'
         })
@@ -207,11 +208,11 @@ export default defineEventHandler(async (event) => {
       throw error
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('PDF generation error:', error)
-    throw createError({
+    return res.status(error.statusCode || 500).json({
       statusCode: error.statusCode || 500,
       statusMessage: error.statusMessage || 'PDF generation failed'
     })
   }
-})
+}

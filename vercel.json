@@ -6,6 +6,9 @@
     "api/webhook-proxy.js": {
       "maxDuration": 30
     },
+    "api/generate-pdf.js": {
+      "maxDuration": 30
+    },
     "api/test-vercel.js": {
       "maxDuration": 10
     }
@@ -30,6 +33,23 @@
     },
     {
       "source": "/api/webhook-proxy",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    },
+    {
+      "source": "/api/generate-pdf",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",

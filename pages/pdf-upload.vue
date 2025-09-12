@@ -647,63 +647,36 @@ async function generatePDF() {
 </body>
 </html>`;
 
-    // Use html2pdf.app service (same as webhook-vercel.js)
-    const pdfApiKey = process.env.NUXT_PDF_API_KEY || 'your-api-key-here';
-    
-    if (!pdfApiKey || pdfApiKey === 'your-api-key-here') {
-      throw new Error('PDF API key not configured. Please set NUXT_PDF_API_KEY environment variable.');
+    // Call the server-side PDF generation API
+    const response = await fetch('/api/generate-pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        extractedData: extractedData.value
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.text()
+      throw new Error(`PDF generation failed: ${response.status} ${errorData}`)
     }
+
+    // Get the PDF blob
+    const pdfBlob = await response.blob()
     
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    // Create download link
+    const url = URL.createObjectURL(pdfBlob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Statutory_Declaration_${data.NAME.replace(/\s+/g, '_')}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
     
-    try {
-      const pdfResponse = await fetch(`https://api.html2pdf.app/v1/generate?apiKey=${encodeURIComponent(pdfApiKey)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          html: html,
-          format: 'A4',
-          marginTop: 75,  // 2cm in pixels (approximately)
-          marginRight: 75,
-          marginBottom: 75,
-          marginLeft: 75,
-          media: 'print'  // Use print styles for better PDF output
-        }),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (pdfResponse.ok) {
-        const pdfBlob = await pdfResponse.blob();
-        
-        // Create download link
-        const url = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Statutory_Declaration_${data.NAME.replace(/\s+/g, '_')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        result.value = 'PDF generated and downloaded successfully!';
-      } else {
-        const errorText = await pdfResponse.text();
-        throw new Error(`PDF service error: ${pdfResponse.status} - ${errorText}`);
-      }
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      if (fetchError.name === 'AbortError') {
-        throw new Error('PDF generation timed out. Please try again.');
-      } else {
-        throw new Error(`PDF generation failed: ${fetchError.message}`);
-      }
-    }
+    result.value = 'PDF generated and downloaded successfully!'
     
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to generate PDF'

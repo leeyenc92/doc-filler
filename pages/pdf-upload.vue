@@ -78,7 +78,7 @@
       
       <div v-if="error" class="result error">
         <VIcon name="alert" />
-        <span>{{ error }}</span>
+        <span v-html="error.replace(/\n/g, '<br>')"></span>
       </div>
       
       <div v-if="extractedData" class="extracted-data">
@@ -214,8 +214,10 @@ const result = ref('')
 const error = ref('')
 const extractedData = ref<any>(null)
 const isGeneratingPdf = ref(false)
+const retryCount = ref(0)
+const maxRetries = 3
 
-// File size limit (4MB for Vercel compatibility)
+// File size limit (10MB for n8n compatibility)
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 function triggerFileInput() {
@@ -289,6 +291,13 @@ async function processDocument() {
   error.value = ''
   result.value = ''
   extractedData.value = null
+  retryCount.value = 0
+  
+  await processDocumentAttempt()
+}
+
+async function processDocumentAttempt() {
+  if (!selectedFile.value) return
   
   try {
     const formData = new FormData()
@@ -339,20 +348,33 @@ async function processDocument() {
     let data
     try {
       data = JSON.parse(responseText)
+      console.log('n8n response data:', data) // Debug log
     } catch (parseError) {
       throw new Error(`Invalid JSON response: ${responseText}`)
     }
     
     // Handle different response formats from n8n
     if (data.success) {
+      // Standard success response with data wrapper
       extractedData.value = data.data.extracted_fields || data.data
       result.value = `Document processed successfully! Extracted ${Object.keys(extractedData.value).length} fields.`
     } else if (data.message && data.message.includes('Workflow was started')) {
       // n8n webhook started but didn't return data immediately
-      throw new Error('Workflow started but no data returned. Please check your n8n workflow configuration.')
+      if (retryCount.value < maxRetries) {
+        retryCount.value++
+        result.value = `Workflow started but no data returned. Retrying... (${retryCount.value}/${maxRetries})`
+        await new Promise(resolve => setTimeout(resolve, 2000 * retryCount.value)) // Exponential backoff
+        return await processDocumentAttempt()
+      } else {
+        throw new Error('n8n workflow started but no data returned after retries. This usually means:\n• The workflow is still processing (try again in a few seconds)\n• The workflow needs to be configured to return data\n• Check your n8n webhook response settings')
+      }
     } else if (data.data) {
-      // Direct data response
+      // Direct data response with data wrapper
       extractedData.value = data.data.extracted_fields || data.data
+      result.value = `Document processed successfully! Extracted ${Object.keys(extractedData.value).length} fields.`
+    } else if (data.purchasers || data.address || data.bank || data.facility) {
+      // Direct response with extracted fields (your current format)
+      extractedData.value = data
       result.value = `Document processed successfully! Extracted ${Object.keys(extractedData.value).length} fields.`
     } else {
       throw new Error(data.message || data.error || 'Document processing failed - no data received')

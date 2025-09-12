@@ -82,11 +82,77 @@
       </div>
       
       <div v-if="extractedData" class="extracted-data">
-        <h2>Extracted Data</h2>
+        <div class="data-header">
+          <h2>Extracted Data</h2>
+          <div class="edit-controls">
+            <VButton 
+              v-if="!isEditing"
+              @click="startEditing"
+              color="secondary"
+              size="small"
+            >
+              <VIcon name="edit" />
+              Edit Data
+            </VButton>
+            <div v-else class="edit-buttons">
+              <VButton 
+                @click="saveEditing"
+                color="success"
+                size="small"
+              >
+                <VIcon name="check" />
+                Save
+              </VButton>
+              <VButton 
+                @click="cancelEditing"
+                color="secondary"
+                size="small"
+              >
+                <VIcon name="close" />
+                Cancel
+              </VButton>
+            </div>
+          </div>
+        </div>
+        
         <div class="data-grid">
-          <div v-for="(value, key) in extractedData" :key="key" class="data-item">
+          <!-- Purchasers section -->
+          <div v-if="(isEditing ? editedData : extractedData).purchasers" class="data-section">
+            <h3>Purchasers</h3>
+            <div v-for="(purchaser, index) in (isEditing ? editedData : extractedData).purchasers" :key="index" class="purchaser-item">
+              <div class="data-item">
+                <strong>Name:</strong>
+                <VInput 
+                  v-if="isEditing"
+                  :model-value="purchaser.name || ''"
+                  @update:model-value="updatePurchaserField(index, 'name', $event)"
+                  placeholder="Enter name"
+                />
+                <span v-else>{{ purchaser.name || 'Not found' }}</span>
+              </div>
+              <div class="data-item">
+                <strong>IC/NRIC:</strong>
+                <VInput 
+                  v-if="isEditing"
+                  :model-value="purchaser.ic || ''"
+                  @update:model-value="updatePurchaserField(index, 'ic', $event)"
+                  placeholder="Enter IC/NRIC"
+                />
+                <span v-else>{{ purchaser.ic || 'Not found' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Other fields -->
+          <div v-for="(value, key) in (isEditing ? editedData : extractedData)" :key="key" class="data-item" v-if="key !== 'purchasers'">
             <strong>{{ formatFieldName(key) }}:</strong>
-            <span>{{ value || 'Not found' }}</span>
+            <VInput 
+              v-if="isEditing && key !== 'purchasers'"
+              :model-value="value || ''"
+              @update:model-value="updateField(key, $event)"
+              :placeholder="`Enter ${formatFieldName(key).toLowerCase()}`"
+            />
+            <span v-else>{{ value || 'Not found' }}</span>
           </div>
         </div>
         
@@ -216,6 +282,10 @@ const extractedData = ref<any>(null)
 const isGeneratingPdf = ref(false)
 const retryCount = ref(0)
 const maxRetries = 3
+
+// Editing state
+const isEditing = ref(false)
+const editedData = ref<any>(null)
 
 // File size limit (10MB for n8n compatibility)
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -392,6 +462,36 @@ function formatFieldName(key: string): string {
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+// Editing functions
+function startEditing() {
+  isEditing.value = true
+  editedData.value = JSON.parse(JSON.stringify(extractedData.value)) // Deep copy
+}
+
+function cancelEditing() {
+  isEditing.value = false
+  editedData.value = null
+}
+
+function saveEditing() {
+  extractedData.value = JSON.parse(JSON.stringify(editedData.value)) // Deep copy
+  isEditing.value = false
+  editedData.value = null
+  result.value = 'Data updated successfully!'
+}
+
+function updateField(key: string, value: any) {
+  if (editedData.value) {
+    editedData.value[key] = value
+  }
+}
+
+function updatePurchaserField(index: number, field: string, value: string) {
+  if (editedData.value && editedData.value.purchasers && editedData.value.purchasers[index]) {
+    editedData.value.purchasers[index][field] = value
+  }
 }
 
 function downloadData() {
@@ -820,6 +920,49 @@ async function generatePDF() {
 .extracted-data h2 {
   margin-bottom: 1rem;
   color: var(--primary);
+}
+
+.data-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.edit-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.data-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--background);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.data-section h3 {
+  margin-bottom: 1rem;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.purchaser-item {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--card-background);
+  border-radius: 4px;
+  border: 1px solid var(--border-light);
+}
+
+.purchaser-item:last-child {
+  margin-bottom: 0;
 }
 
 .data-grid {

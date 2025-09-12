@@ -6,7 +6,7 @@
       
       <div class="upload-section">
         <h2>Upload PDF Document</h2>
-        <p>Supported formats: PDF files up to 4MB (Vercel limit)</p>
+        <p>Supported formats: PDF files up to 10MB (Vercel limit)</p>
         
         <div class="upload-area" 
              :class="{ 'dragover': isDragOver, 'has-file': selectedFile }"
@@ -18,7 +18,7 @@
           <div v-if="!selectedFile" class="upload-placeholder">
             <VIcon name="upload" size="large" />
             <p>Drag and drop your PDF here or click to browse</p>
-            <p class="upload-hint">Maximum file size: 4MB</p>
+            <p class="upload-hint">Maximum file size: 10MB</p>
           </div>
           
           <div v-else class="file-info">
@@ -216,7 +216,7 @@ const extractedData = ref<any>(null)
 const isGeneratingPdf = ref(false)
 
 // File size limit (4MB for Vercel compatibility)
-const MAX_FILE_SIZE = 4 * 1024 * 1024
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 function triggerFileInput() {
   fileInput.value?.click()

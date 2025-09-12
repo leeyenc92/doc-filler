@@ -1,19 +1,34 @@
-import { defineEventHandler, readBody } from 'h3'
+import { defineEventHandler, readMultipartFormData } from 'h3'
 
 export default defineEventHandler(async (event: any) => {
   try {
-    // For now, let's just forward the request directly to n8n
-    // This is a simpler approach that should work
+    // Get the multipart form data from the request
+    const formData = await readMultipartFormData(event)
     
-    // Get the raw body
-    const body = await readBody(event)
-    
+    if (!formData || formData.length === 0) {
+      return {
+        statusCode: 400,
+        statusMessage: 'No form data provided'
+      }
+    }
+
+    // Find the file in the form data
+    const fileData = formData.find(item => item.name === 'file')
+    const filename = formData.find(item => item.name === 'filename')?.data?.toString() || 'document.pdf'
+    const timestamp = formData.find(item => item.name === 'timestamp')?.data?.toString() || new Date().toISOString()
+
+    if (!fileData || !fileData.data) {
+      return {
+        statusCode: 400,
+        statusMessage: 'No file provided'
+      }
+    }
+
     // Create FormData for the n8n webhook
     const n8nFormData = new FormData()
-    
-    // For testing, let's just send a simple request
-    n8nFormData.append('test', 'data')
-    n8nFormData.append('timestamp', new Date().toISOString())
+    n8nFormData.append('file', new Blob([fileData.data], { type: fileData.type || 'application/pdf' }), filename)
+    n8nFormData.append('filename', filename)
+    n8nFormData.append('timestamp', timestamp)
 
     // Make the request to n8n webhook
     const n8nResponse = await fetch('https://evident-fox-nationally.ngrok-free.app/webhook/doc-extraction', {
@@ -23,10 +38,6 @@ export default defineEventHandler(async (event: any) => {
 
     // Get the response data
     const responseText = await n8nResponse.text()
-    
-    console.log('N8N Response Status:', n8nResponse.status)
-    console.log('N8N Response Headers:', [...n8nResponse.headers.entries()])
-    console.log('N8N Response Body:', responseText)
 
     // Set CORS headers
     event.node.res.setHeader('Access-Control-Allow-Origin', '*')
@@ -59,8 +70,6 @@ export default defineEventHandler(async (event: any) => {
     }
 
   } catch (error) {
-    console.error('Webhook proxy error:', error)
-    
     // Set CORS headers even for errors
     event.node.res.setHeader('Access-Control-Allow-Origin', '*')
     event.node.res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -69,7 +78,7 @@ export default defineEventHandler(async (event: any) => {
 
     return {
       statusCode: 500,
-      statusMessage: error instanceof Error ? error.message : 'Internal server error'
+      statusMessage: 'Internal server error'
     }
   }
 })

@@ -150,7 +150,7 @@
         <h2>Webhook Integration</h2>
         <p>This feature integrates with your n8n workflow via proxy endpoint:</p>
         <code class="webhook-url">/api/webhook-proxy</code>
-        <p class="webhook-note">Proxy forwards to: https://evident-fox-nationally.ngrok-free.app/webhook-test/doc-extraction</p>
+        <p class="webhook-note">Proxy forwards to: https://evident-fox-nationally.ngrok-free.app/webhook/doc-extraction</p>
         
         <div class="webhook-details">
           <h3>Request Format:</h3>
@@ -327,6 +327,7 @@ async function processDocumentAttempt() {
   formData.append('filename', selectedFile.value.name)
   formData.append('timestamp', new Date().toISOString())
   
+  // Use the synced webhook-proxy endpoint
   const response = await fetch('/api/webhook-proxy', {
     method: 'POST',
     body: formData

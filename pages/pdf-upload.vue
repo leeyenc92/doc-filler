@@ -122,22 +122,24 @@
             <div v-for="(purchaser, index) in (isEditing ? editedData : extractedData).purchasers" :key="index" class="purchaser-item">
               <div class="data-item">
                 <strong>Name:</strong>
-                <VInput 
-                  v-if="isEditing"
-                  :model-value="purchaser.name || ''"
-                  @update:model-value="updatePurchaserField(index, 'name', $event)"
-                  placeholder="Enter name"
-                />
+                <VField v-if="isEditing">
+                  <VInput 
+                    :model-value="purchaser.name || ''"
+                    @update:model-value="updatePurchaserField(index, 'name', $event)"
+                    placeholder="Enter name"
+                  />
+                </VField>
                 <span v-else>{{ purchaser.name || 'Not found' }}</span>
               </div>
               <div class="data-item">
                 <strong>IC/NRIC:</strong>
-                <VInput 
-                  v-if="isEditing"
-                  :model-value="purchaser.ic || ''"
-                  @update:model-value="updatePurchaserField(index, 'ic', $event)"
-                  placeholder="Enter IC/NRIC"
-                />
+                <VField v-if="isEditing">
+                  <VInput 
+                    :model-value="purchaser.ic || ''"
+                    @update:model-value="updatePurchaserField(index, 'ic', $event)"
+                    placeholder="Enter IC/NRIC"
+                  />
+                </VField>
                 <span v-else>{{ purchaser.ic || 'Not found' }}</span>
               </div>
             </div>
@@ -146,12 +148,13 @@
           <!-- Other fields -->
           <div v-for="(value, key) in (isEditing ? editedData : extractedData)" :key="key" class="data-item" v-if="key !== 'purchasers'">
             <strong>{{ formatFieldName(key) }}:</strong>
-            <VInput 
-              v-if="isEditing && key !== 'purchasers'"
-              :model-value="value || ''"
-              @update:model-value="updateField(key, $event)"
-              :placeholder="`Enter ${formatFieldName(key).toLowerCase()}`"
-            />
+            <VField v-if="isEditing && key !== 'purchasers'">
+              <VInput 
+                :model-value="value || ''"
+                @update:model-value="updateField(key, $event)"
+                :placeholder="`Enter ${formatFieldName(key).toLowerCase()}`"
+              />
+            </VField>
             <span v-else>{{ value || 'Not found' }}</span>
           </div>
         </div>

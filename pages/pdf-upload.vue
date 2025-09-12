@@ -6,7 +6,7 @@
       
       <div class="upload-section">
         <h2>Upload PDF Document</h2>
-        <p>Supported formats: PDF files up to 10MB</p>
+        <p>Supported formats: PDF files up to 4MB (Vercel limit)</p>
         
         <div class="upload-area" 
              :class="{ 'dragover': isDragOver, 'has-file': selectedFile }"
@@ -18,7 +18,7 @@
           <div v-if="!selectedFile" class="upload-placeholder">
             <VIcon name="upload" size="large" />
             <p>Drag and drop your PDF here or click to browse</p>
-            <p class="upload-hint">Maximum file size: 10MB</p>
+            <p class="upload-hint">Maximum file size: 4MB</p>
           </div>
           
           <div v-else class="file-info">
@@ -215,8 +215,8 @@ const error = ref('')
 const extractedData = ref<any>(null)
 const isGeneratingPdf = ref(false)
 
-// File size limit (10MB)
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+// File size limit (4MB for Vercel compatibility)
+const MAX_FILE_SIZE = 4 * 1024 * 1024
 
 function triggerFileInput() {
   fileInput.value?.click()
@@ -296,15 +296,42 @@ async function processDocument() {
     formData.append('filename', selectedFile.value.name)
     formData.append('timestamp', new Date().toISOString())
     
-    // Use the synced webhook-proxy endpoint
-    const response = await fetch('/api/webhook-proxy', {
-      method: 'POST',
-      body: formData
-    })
+    // Check file size and choose appropriate endpoint
+    let response
+    if (selectedFile.value.size > 4 * 1024 * 1024) {
+      // File too large for Vercel, use direct n8n call
+      result.value = 'File is large, using direct n8n connection...'
+      response = await fetch('https://evident-fox-nationally.ngrok-free.app/webhook/doc-extraction', {
+        method: 'POST',
+        mode: 'cors',
+        body: formData
+      })
+    } else {
+      // Use Vercel proxy for smaller files
+      response = await fetch('/api/webhook-proxy', {
+        method: 'POST',
+        body: formData
+      })
+    }
     
     if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`HTTP ${response.status}: ${errorData}`)
+      if (response.status === 413) {
+        // File too large, fallback to direct n8n
+        result.value = 'File too large for proxy, trying direct n8n connection...'
+        response = await fetch('https://evident-fox-nationally.ngrok-free.app/webhook/doc-extraction', {
+          method: 'POST',
+          mode: 'cors',
+          body: formData
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.text()
+          throw new Error(`HTTP ${response.status}: ${errorData}`)
+        }
+      } else {
+        const errorData = await response.text()
+        throw new Error(`HTTP ${response.status}: ${errorData}`)
+      }
     }
     
     const responseText = await response.text()
